@@ -1,0 +1,83 @@
+#!/bin/bash
+# $path : <executable_path>
+# $cpath : current (working) path
+
+upath=`echo ${0/\/runSc/}`
+#echo $upath
+path=`readlink -f $upath`
+#echo $path
+pdbinp=$1
+#echo $pdbinp
+sc_path=$2
+#sc_path=~/Desktop/Desktop_old/CCP4/destination/ccp4-7.0/bin/sc
+echo $sc_path
+
+cpath=`pwd`
+
+if [ "$#" -lt "2" ]; then
+        echo
+        echo "====================================================================="
+        echo "Usage: ./runSc <PDB> <Sc_path>"
+	echo "<Sc_path> SHOULD NOT contain the executable name: sc"
+	echo "Example <Sc_path>: ~/Desktop/Desktop_old/CCP4/destination/ccp4-7.0/bin"
+        echo "====================================================================="
+        echo
+        exit
+fi
+
+
+chains=`$path/EXEC/chainsplit.pl $pdbinp $cpath`
+chain1=`echo $chains | cut -f1 -d'~'`
+chain2=`echo $chains | cut -f2 -d'~'`
+
+echo $chain1 $chain2
+
+$path/EXEC/trimH.pl $pdbinp | grep "^ATOM" > $cpath/pdbwH.pdb
+sc_exec=${sc_path}/sc
+source $sc_path/ccp4.setup-sh
+rm $cpath/Sc.log >& /dev/null
+$path/EXEC/run_sc $cpath/pdbwH.pdb $chain1 $chain2 $sc_exec >& $cpath/Sc.log
+ls -lart $cpath/Sc.log
+out1=`grep "Shape complementarity statistic Sc = " $cpath/Sc.log`
+grep "No atoms found in interface" $cpath/Sc.log
+Noatom=`grep "No atoms found in interface" $cpath/Sc.log | head -1 | cut -f2 -d':' | cut -f1 -d 'a'`
+grep "SC:  mds: too many atoms" $cpath/Sc.log 
+TooMany=`grep "SC:  mds: too many atoms" $cpath/Sc.log | head -1 | cut -f3 -d':' | cut -f1 -d 'm'`
+Nat=`echo ${Noatom/\s*//}`
+TM=`echo ${TooMany/\s*//}`
+#echo $Nat
+#echo $TM
+rm $cpath/Scout.prompt >& /dev/null
+
+if [ "$TM" == "too" ]; then
+	#echo "Into the block"
+	out1="Shape complementarity statistic Sc = "NaN
+	echo "Too_many_atoms" > $cpath/Scout.prompt
+fi
+
+if [ "$Nat" == "No" ]; then
+	#echo "Into the block"
+	out1="Shape complementarity statistic Sc = "0.000
+fi
+
+#out1=`$path/EXEC/run_sc pdbwH.pdb $chain1 $chain2 $sc_exec | grep "Shape complementarity statistic Sc = "`
+# REDUNDANT STEP
+#out2=`$path/EXEC/run_sc pdbwH.pdb $chain2 $chain1 $sc_exec | grep "Shape complementarity statistic Sc = "`
+Sc=`echo ${out1/Shape complementarity statistic Sc = /}`;
+#Sc2=`echo ${out2/Shape complementarity statistic Sc = /}`;
+#echo 'Sc1='$Sc1 ', Sc2='$Sc2
+
+#sumSc=`expr $Sc1+$Sc2 | bc`
+#echo $sumSc
+#Sc=`expr $sumSc/2 | bc -l | cut -c1-4 | awk '{printf "%6.3f\n", $1}'`
+#echo $Sc
+
+outfile=${pdbinp/\.pdb/\.Sc};
+
+echo 'Sc='$Sc
+echo $Sc > $outfile;
+rm -f $cpath/pdbWH.pdb
+
+#find /home/sankar/ccp4_scr/ -cmin +1 | xargs rm -f
+
+

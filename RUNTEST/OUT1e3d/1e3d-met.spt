@@ -1,0 +1,10 @@
+load     1e3d_AB.pdb
+wireframe off
+ribbon
+color chain
+select hetero
+spacefill
+select :B &&  45, :B && 470, :B && 524                                                              
+wireframe 100
+color cpk
+ 

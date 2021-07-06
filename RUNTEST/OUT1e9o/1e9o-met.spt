@@ -1,0 +1,10 @@
+load     1e9o_AB.pdb
+wireframe off
+ribbon
+color chain
+select hetero
+spacefill
+select :B &&  44, :B &&  46, :B &&  61, :B && 118, :B &&  61, :B &&  69, :B &&  78, :B &&  81, :B && 134, :B &&  44, :B &&  46, :B &&  61, :B && 118, :B &&  61, :B &&  69, :B &&  78, :B &&  81, :B && 134                                                                                                 
+wireframe 100
+color cpk
+ 

@@ -1,0 +1,660 @@
+#!/bin/bash -f
+# $path : <executable_path>
+# $cpath : current (working) path
+
+upath=`echo ${0/\/runEC/}`
+#echo $upath
+
+path=`readlink -f $upath`
+#echo $path
+
+cpath=`pwd`
+
+rm amber.crg amber_dummy.siz
+
+ln -s $path/LIBR/amber.crg $cpath/amber.crg
+ln -s $path/LIBR/amber_dummy.siz $cpath/amber_dummy.siz
+
+pdbinp=$1
+echo "pdbinp:" $pdbinp
+
+tag=`echo $pdbinp | cut -f1 -d '.'`
+#echo $tag
+
+#echo $tag.EC
+#ls $tag.EC
+
+outdir=OUT$tag
+#echo $outdir
+
+delphi_path=$2
+#echo $delphi_path
+
+ESpath=$3
+#echo $ESpath
+
+gauss=$4
+#echo $gauss 
+
+if [ "$#" -lt "1" ]; then
+	echo
+	echo "========================================================"
+	echo "Usage: ./runEC <PDB> <delphi_path> <ESpath> <gauss_flag>"
+	echo "Paths SHOULD NOT contain executable name(s)"
+	echo "Example <delphi_path>: ~/bin ; Example <ESpath>: ~/bin "
+	echo "========================================================"
+	echo
+	exit
+fi
+
+
+if [ "$#" -lt "2" ]; then
+echo "delphi_path is missing"
+exit;
+elif [ "$#" -lt "3" ]; then
+echo "delphi_path and ESpath are missing"
+exit;
+elif [ "$#" == "3" ]; then
+echo "The Multidielectric Gaussian flag is set to off mode"
+echo "Since there were no user-input provided for this parameter"
+echo "Normal Delphi (single internal dielectric, epsilon = 2.0) will be executed"
+gauss=0
+elif [ "$#" == "4" ]; then
+	if [ "$gauss" == "1" ]; then
+	echo "The Multidielectric Gaussian flag is up"
+	echo "Delphi will commense with its Multidielctric Gaussian feature"
+	elif [ "$gauss" == "0" ]; then
+	echo "The Multidielectric Gaussian flag is down"
+	echo "Normal Delphi (single internal dielectric, epsilon = 2.0) will be executed"
+	fi
+fi
+
+#echo "I am passed the checks; Am I ?"
+
+        rm -f $cpath/chfn.inp
+        echo $pdbinp > $cpath/chfn.inp
+	echo "cat $cpath/chfn.inp"
+	cat $cpath/chfn.inp
+	echo $cpath
+        fnch=`$path/EXEC/chfn.pl $cpath/chfn.inp`
+	echo $fnch
+	if [ `echo $fnch` == "OK" ]; then 
+	echo "Calculations may proceed"
+	else
+	exit;
+	fi
+
+#============================================================================================================================
+echo 'You entered:' $pdbinp
+code=`echo $pdbinp | cut -f1 -d"."`
+echo 'code:' $code
+
+#=======================================================================
+#  CHECK INPUT PDB FORMAT AND OTHER REQUIREMENTS 
+#  ACCEPT OR REJECT
+#=======================================================================
+
+#=======================================================================
+# Convert to original Reduce format (e.g., "HG12" -> "2HG1")  if necessary (otherwise skip)
+# The 13th column should be either blank or a numeric and never the atom type "H" 
+# Rather the 14th column should contain the atom type "H" 
+#=======================================================================
+
+$path/EXEC/reducemap.pl $pdbinp > $cpath/temp.pdb
+mv $cpath/temp.pdb $pdbinp
+#awk '$1=="ATOM" || $1=="HETATM"' formp.pdb > temp.pdb
+cp $pdbinp $cpath/temp.pdb
+$path/EXEC/metRrename.csh $cpath/temp.pdb
+mv $cpath/temp.pdb $pdbinp
+echo $pdbinp
+
+#================================= OUTDIR =======================
+mkdir -p $outdir
+#================================================================
+
+#=========================================
+# REFRESH DIRECTORY (remove old files if present) 
+#=========================================
+rm -f $cpath/alter.inp
+rm -f $cpath/surf_dot
+rm -f $cpath/surf_out
+rm -f $cpath/surf.pdb
+rm -f $cpath/check
+rm -f $cpath/sg.out
+rm -f $cpath/sg.con
+rm -f $cpath/icon.out
+rm -f $cpath/num.out
+rm -f $cpath/remove.out
+rm -f $cpath/inp.pdb
+rm -f $cpath/sphere.dot
+rm -f $cpath/sucal1.out
+rm -f $cpath/out.satv
+rm -f $cpath/dsl.out
+rm -f $cpath/dsl.num
+rm -f $cpath/*.pot
+rm -f $cpath/*cout.pdb
+rm -f $cpath/*sout.pdb
+rm -f $cpath/inp*
+rm -f $cpath/ARCDAT
+rm -f $cpath/core
+rm -f $cpath/ARCDAT
+rm -f $cpath/fort*
+rm -f $cpath/outhiscysO.pdb
+rm -f $cpath/outhisO.pdb
+rm -f $cpath/hiscysNC.pdb
+rm -f $cpath/msph.dot
+rm -f $cpath/numM.res
+rm -f $cpath/met.cores
+rm -f $cpath/fpp.status
+rm -f $cpath/formp.pdb
+rm -f $cpath/formch.out
+rm -f $cpath/redun.out
+rm -f $cpath/res1.out
+rm -f $cpath/temp*
+rm -f $cpath/target.res
+rm -f $cpath/res.replace
+rm -f $cpath/script1.prm
+rm -f $cpath/script2.prm
+rm -f $cpath/chfn.inp
+rm -f $cpath/sres.res
+rm -f $cpath/smres.res
+rm -f $cpath/smresE.res
+#=========================================
+
+rm -f $cpath/redun.out
+rm -f $cpath/rdn.log
+
+cp $pdbinp $cpath/orig.pdb
+NO=`$path/EXEC/pdb2resWMchain.pl $cpath/orig.pdb $cpath`
+wc -l $cpath/orig.res
+
+echo "$cpath/EXEC/mapresno1to1.pl $pdbinp $cpath > $cpath/mapped.pdb"
+$path/EXEC/mapresno1to1.pl $pdbinp $cpath > $cpath/mapped.pdb
+mv $cpath/mapped.pdb $pdbinp
+
+chains=`$path/EXEC/chainsplit.pl $pdbinp $cpath`
+chain1=`echo $chains | cut -f1 -d'~'`
+chain2=`echo $chains | cut -f2 -d'~'`
+
+echo "TWO POLYPEPTIDE CHAINS FOUND IN THE INPUT MOLECULE: CHAIN" \'$chain1\' "AND CHAIN" \'$chain2\'
+
+pdb1=`echo $code`_`echo $chain1`.pdb
+pdb2=`echo $code`_`echo $chain2`.pdb
+pdb12=`echo $code`_`echo $chain1``echo $chain2`.pdb
+
+echo "PDB FILE CONTAINING THE FIRST CHAIN :" $pdb1
+echo "PDB FILE CONTAINING THE SECOND CHAIN:" $pdb2
+echo "PDB FILE CONTAINING BOTH THE CHAINS :" $pdb12
+
+wc $cpath/inp1.pdb
+wc $cpath/inp2.pdb
+
+cp $cpath/inp1.pdb $pdb1
+cp $cpath/inp2.pdb $pdb2
+cp $pdbinp $pdb12
+
+wc $pdb1
+wc $pdb2
+wc $pdb12
+
+#=================================================================
+#  MAP PDB FROM RES 1 (ALREADY MAPPED)
+#=================================================================
+echo "==============================================================="
+
+N1=`$path/EXEC/pdb2resWMchain.pl $pdb1 $cpath`
+echo "$pdb1 CONTAINS $N1 RESIDUES"
+N2=`$path/EXEC/pdb2resWMchain.pl $pdb2 $cpath`
+echo "$pdb2 CONTAINS $N2 RESIDUES"
+N3=`$path/EXEC/pdb2resWMchain.pl $pdb12 $cpath`
+echo "$pdb12 CONTAINS $N3 RESIDUES"
+
+cp $pdb1 $cpath/inp1map.pdb
+cp $pdb2 $cpath/inp2map.pdb
+cp $pdb12 $cpath/inp12map.pdb
+
+echo "==============================================================="
+
+lench=`wc -l $cpath/orig.res | cut -f1 -d' '`
+$path/EXEC/pdb2resWMchain.pl $cpath/inp12map.pdb $cpath
+
+echo "==============================================================="
+echo "CHECKING CAHIN-LENGTH"
+echo "==============================================================="
+
+if [ "$lench" -gt "2500" ] ; then 
+echo "============================================================="
+echo "Your PDB file contains "$lench" residues"
+echo "Program will exit"
+echo "PDB file should contain not more than 2500 residues"
+echo "============================================================="
+exit;
+else 
+echo "============================================================="
+echo "Length of the polypeptide chain is $lench (which is OK)"
+echo "Program will proceed"
+echo "============================================================="
+fi
+
+#goto SKIP
+
+echo "pdb1="$pdb12
+echo "pdb2="$pdb12
+echo "pdb12="$pdb12
+
+
+#PROCEED1:
+
+echo "==============================================================="
+echo "SETTING FIELDS"
+echo "==============================================================="
+
+asa1=`echo $pdb1 | cut -f1 -d '.'`.asa
+asa2=`echo $pdb2 | cut -f1 -d '.'`.asa
+asa12=`echo $pdb12 | cut -f1 -d '.'`.asa
+asa1log=`echo $pdb1 | cut -f1 -d '.'`.asalog
+asa2log=`echo $pdb2 | cut -f1 -d '.'`.asalog
+asa12log=`echo $pdb12 | cut -f1 -d '.'`.asalog
+dslf=`echo $code`.dsl
+Smfile=`echo $code`.Sm
+Emfile=`echo $code`.Em
+CSplot=`echo $code`.CSplot
+
+surf1=`echo $pdb1 | cut -f1 -d '.'`-surf.pdb
+surf2=`echo $pdb2 | cut -f1 -d '.'`-surf.pdb
+
+dsurf1=`echo $pdb1 | cut -f1 -d '.'`.dsurf
+dsurf2=`echo $pdb2 | cut -f1 -d '.'`.dsurf
+
+intf1=`echo $pdb1 | cut -f1 -d '.'`-intf.res
+intf2=`echo $pdb2 | cut -f1 -d '.'`-intf.res
+
+surf1forsatv=`echo $pdb1 | cut -f1 -d '.'`.surf
+surf2forsatv=`echo $pdb2 | cut -f1 -d '.'`.surf
+surf12forsatv=`echo $pdb12 | cut -f1 -d '.'`.surf
+
+int1surf=`echo $pdb1 | cut -f1 -d '.'`.isurf
+int2surf=`echo $pdb2 | cut -f1 -d '.'`.isurf
+
+int1spdb=`echo $pdb1 | cut -f1 -d '.'`-isurf.pdb
+int2spdb=`echo $pdb2 | cut -f1 -d '.'`-isurf.pdb
+
+iatom1=`echo $pdb1 | cut -f1 -d'.'`.iatom
+iatom2=`echo $pdb2 | cut -f1 -d'.'`.iatom
+
+rasscript=`echo $code`-intsurf.spt
+metcores=`echo $code`.mco
+metrasview=`echo $code`-met.spt
+surf=`echo $code`-surf.pdb
+#outScEC=`echo $code`.ScEC
+outEC=`echo $code`.EC
+
+#=========================================================================
+#  CALCULATE SOLVENT ACCESSIBLE SURFACE AREA AND DETERMINE THE INTERFACE
+#  INTERFACIAL ATOMS SHOULD HAVE DELSAA = (SAA(FREE) - SAA(BOUND)) != 0 
+#  GENERATE INTERFACE RES FILES
+#=========================================================================
+
+echo "==============================================================="
+echo "CALCULATING SOLVENT ACCESSIBLE AREAS AND DETTERMINING INTERFACE"
+echo "==============================================================="
+
+echo "iatom2="$iatom1
+echo "iatom1="$iatom2
+
+rm $path/met.cores >& /dev/null 
+rm $path/met.rasview >& /dev/null 
+$path/EXEC/mcoord.exe $pdb12 $cpath/met.cores $cpath/met.rasview
+Nmet=`wc -l $cpath/met.cores | cut -f1 -d' '`
+	if [ "$Nmet" == "0" ]; then
+	echo "============================================================"
+	echo "============================================================"
+	echo "               NO METAL CO-ORDINATION DETECTED"
+	echo "============================================================"
+	echo "============================================================"
+	else
+	mv $cpath/met.cores $metcores
+	mv $cpath/met.rasview $metrasview
+	cat $metcores
+#	rasmol -script $metrasview &
+	fi
+
+rescut=`$path/EXEC/rescut.pl $pdbinp`
+echo $rescut
+
+$path/EXEC/naccess.bash $pdb1	# A.pdb (original)
+$path/EXEC/naccess.bash $pdb2	# B.pdb (original)
+$path/EXEC/naccess.bash $pdb12	# AB.pdb (original)
+
+echo "$path/EXEC/delasa.exe $asa1 $asa2 $asa12 $cpath > $cpath/temp.999"
+$path/EXEC/delasa.exe $asa1 $asa2 $asa12 $cpath > $cpath/temp.999
+Nint=`awk '{print $1}' $cpath/temp.999`
+
+echo "NUMBER OF INTERFACIAL ATOMS BURIED UPON COMPLEXATION:" $Nint
+
+rm -f $cpath/check.Nint
+echo $Nint
+
+if [ "$Nint" == "0" ]; then
+echo "================================================================================================================="
+echo "================================================================================================================="
+echo "================================================================================================================="
+echo "NO INTERFACIAL ATOMS DETECTED. THE CHAINS ARE NON-INTERACTING AS IT SEEMS. HAVE A LOOK AT THE PDB FILE in RASMOL"
+echo "NO_Nint" > $cpath/check.Nint
+echo "$code.pdb: NO INTERFACIAL ATOMS DETECTED. THE CHAINS ARE NON-INTERACTING AS IT SEEMS. HAVE A LOOK AT THE PDB FILE IN RASMOL / PYMOL / CHIMERA " > $code.log
+echo "EC set to -1.00 AS A PENALTY"
+EC=`echo -1.00`
+echo $EC > $outEC
+echo "================================================================================================================="
+echo "================================================================================================================="
+echo "================================================================================================================="
+exit
+fi
+
+#outfile: fort.14, fort.15, fort.16
+
+cp $cpath/fort.14 $iatom1
+cp $cpath/fort.15 $iatom2
+
+ls -lart $iatom1
+ls -lart $iatom2
+
+echo "=============================================================="
+echo "=============================================================="
+cat $cpath/fort.16
+echo "=============================================================="
+echo "=============================================================="
+
+#wc -l inp12map.res
+#wc -l orig.res
+
+$path/EXEC/crmap.pl $cpath
+if [ -e "inp12map.res" ] && [ -e "fort.16" ] ; then
+	$path/EXEC/intres.pl $iatom1 $iatom2 $cpath
+else
+	echo "inp12map.res or fort.16 seems to be deleted! Check!!"
+	exit;
+fi
+#outfile: intf1.res, intf2.res, ras.select
+
+cp $cpath/fort.16 $code.asaAngsq
+mv $cpath/intf1.res $intf1
+mv $cpath/intf2.res $intf2
+
+#=========================================================================
+# CALCULATE BURIAL OF RESIDUES AS IN THE WHOLE COMPLEX
+#=========================================================================
+
+echo "==============================================================="
+echo "CALCULATING BURIAL OF RESIDUES AS IN THE WHOLE (COMPLEX) MOLECULE"
+echo "==============================================================="
+
+#=========================================================================
+# GENERATE SURFACE FOR MOLECULE 1 
+#=========================================================================
+
+#==================================================================================================
+#======================================= SURFACE FILE FOR INTERFACE 1 =============================
+#==================================================================================================
+
+$ESpath/EDTSurf -i $pdb1 -s 3 -f 1 -o $cpath/out
+mv $cpath/out.ply.surf $dsurf1
+$ESpath/EDTSurf -i $pdb2 -s 3 -f 1 -o $cpath/out 
+mv $cpath/out.ply.surf $dsurf2
+
+echo "==========================================================================================="
+echo $dsurf1
+echo $dsurf2
+echo "==========================================================================================="
+
+echo "==========================================================================================="
+echo $iatom1
+echo $iatom2
+echo "==========================================================================================="
+
+echo "$path/EXEC/fetchds.exe $iatom1 $dsurf1"
+$path/EXEC/fetchds.exe $iatom1 $dsurf1 $cpath
+mv $cpath/fort.28 $cpath/intsurf1.pdb
+mv $cpath/fort.38 $cpath/outms1-surf.pdb
+$path/EXEC/fetchds.exe $iatom2 $dsurf2 $cpath
+mv $cpath/fort.28 $cpath/intsurf2.pdb
+mv $cpath/fort.38 $cpath/outms2-surf.pdb
+
+#cat intsurf1.pdb intsurf2.pdb > intsurf12.pdb
+#cat outms1-surf.pdb outms2-surf.pdb > outms12-surf.pdb
+#wc intsurf12.pdb
+#wc outms12-surf.pdb
+
+#./scriptmodinp.bash $pdb1 $pdb2
+
+#inp1=$1
+#inp2=$2
+
+echo "$path/EXEC/pdb2resWMchain.pl $pdb1 $cpath"
+$path/EXEC/pdb2resWMchain.pl $pdb1 $cpath
+echo "$path/EXEC/pdb2resWMchain.pl $pdb2 $cpath"
+$path/EXEC/pdb2resWMchain.pl $pdb2 $cpath
+
+echo "$path/EXEC/dsl.exe $pdb1 $cpath"
+$path/EXEC/dsl.exe $pdb1 $cpath
+mv $cpath/dsl.out $cpath/inp.dsl
+rm $cpath/dsl.num
+echo "$path/EXEC/his2hidep_chains.pl $pdb1 $cpath"	# internally calls cys2cyxs.pl
+$path/EXEC/his2hidep_chains.pl $pdb1 $cpath	# internally calls cys2cyxs.pl
+echo "Calling $path/EXEC/cys2cyxs_chains.pl for CYS -> CYX conversion"
+$path/EXEC/cys2cyxs_chains.pl $cpath
+$path/EXEC/ntrename.pl $cpath
+mv $cpath/hiscysNC.pdb $cpath/inp1m.pdb
+
+$path/EXEC/dsl.exe $pdb2 $cpath
+mv $cpath/dsl.out $cpath/inp.dsl
+rm $cpath/dsl.num
+$path/EXEC/his2hidep_chains.pl $pdb2 $cpath 	# internally calls cys2cyxs.pl
+echo "Calling $path/EXEC/cys2cyxs_chains.pl for CYS -> CYX conversion"
+$path/EXEC/cys2cyxs_chains.pl $cpath
+$path/EXEC/ntrename.pl $cpath
+mv $cpath/hiscysNC.pdb $cpath/inp2m.pdb
+
+$path/EXEC/makedumpdbint2.pl $cpath/inp1m.pdb $cpath/inp2m.pdb $cpath
+
+wc $cpath/real1dum2.pdb
+wc $cpath/real2dum1.pdb
+
+echo "DELPHI INPUTS CREATED WITH DUMMY ATOMS"
+
+#exit;
+
+# intsurf1.pdb and intsurf2.pdb should be pre-existing 
+#
+
+#SKIP: 
+
+gsz=`$path/EXEC/hdist.exe $pdbinp $cpath`
+echo "$path/EXEC/hdist.exe $pdbinp $cpath"
+
+if [ "$lench" -gt "1000" ]; then 
+echo "length exceeds 1000 : " $lench
+gsz=281
+fi
+
+echo "GRID SIZE FOR DELPHI: " $gsz
+
+$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf1.pdb outmod1.pdb outsurf11.pdb $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf1.pdb outmod1.pdb outsurf11.pdb $gsz $gauss"
+mv $cpath/script.prm $cpath/script1.prm 
+$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf1.pdb outmod2.pdb outsurf21.pdb $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf1.pdb outmod2.pdb outsurf21.pdb $gsz $gauss"
+mv $cpath/script.prm $cpath/script2.prm 
+
+echo "delphi is running now from $delphi_path"
+
+if [ "$gauss" == "0" ]; then
+	echo "$delphi_path/delphi $cpath/script1.prm > $cpath/log11"
+	$delphi_path/delphi $cpath/script1.prm > $cpath/log11
+	mv $cpath/phimap.cube $cpath/real1dum2_1.cube >& $cpath/junk.temp
+	$delphi_path/delphi $cpath/script2.prm > $cpath/log21 
+	mv $cpath/phimap.cube $cpath/real2dum1_1.cube >& $cpath/junk.temp
+elif [ "$gauss" == "1" ]; then
+	rm $cpath/ARCDAT >& $cpath/junk.temp
+	$delphi_path/delphi $cpath/script1.prm > $cpath/log11
+	mv $cpath/phimap.cube $cpath/real1dum2_1.cube >& $cpath/junk.temp
+	rm $cpath/ARCDAT >& $cpath/junk.temp
+	$delphi_path/delphi $cpath/script2.prm > $cpath/log21
+	mv $cpath/phimap.cube $cpath/real2dum1_1.cube >& $cpath/junk.temp
+fi
+
+
+$path/EXEC/extpot.pl $cpath/outsurf11.pdb > $cpath/temp11.pot
+$path/EXEC/extpot.pl $cpath/outsurf21.pdb > $cpath/temp21.pot
+
+$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf2.pdb outmod1.pdb outsurf12.pdb $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf2.pdb outmod1.pdb outsurf12.pdb $gsz $gauss"
+mv $cpath/script.prm $cpath/script1.prm 
+$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf2.pdb outmod2.pdb outsurf22.pdb $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf2.pdb outmod2.pdb outsurf22.pdb $gsz $gauss"
+mv $cpath/script.prm $cpath/script2.prm 
+
+if [ "$gauss" == "0" ]; then
+	$delphi_path/delphi $cpath/script1.prm > $cpath/log12
+	mv $cpath/phimap.cube $cpath/real1dum2_2.cube >& $cpath/junk.temp
+	$delphi_path/delphi $cpath/script2.prm > $cpath/log22
+	mv $cpath/phimap.cube $cpath/real2dum1_2.cube >& $cpath/junk.temp
+elif [ "$gauss" == "1" ]; then
+	rm $cpath/ARCDAT >& $cpath/junk.temp
+	$delphi_path/delphi $cpath/script1.prm > $cpath/log12
+	mv $cpath/phimap.cube $cpath/real1dum2_2.cube >& $cpath/junk.temp
+	rm $cpath/ARCDAT >& $cpath/junk.temp
+	$delphi_path/delphi $cpath/script2.prm > $cpath/log22
+	mv $cpath/phimap.cube $cpath/real2dum1_2.cube >& $cpath/junk.temp
+fi
+
+echo "ls -lart $cpath/*.cube" | bash
+
+$path/EXEC/extpot.pl $cpath/outsurf12.pdb > $cpath/temp12.pot
+$path/EXEC/extpot.pl $cpath/outsurf22.pdb > $cpath/temp22.pot
+
+i1=`$path/EXEC/ccpsw.exe $cpath/temp11.pot $cpath/temp21.pot $cpath`
+echo "$path/EXEC/ccpsw.exe $cpath/temp11.pot $cpath/temp21.pot $cpath"
+echo $i1
+i2=`$path/EXEC/ccpsw.exe $cpath/temp12.pot $cpath/temp22.pot $cpath`
+echo "$path/EXEC/ccpsw.exe $cpath/temp12.pot $cpath/temp22.pot $cpath"
+echo $i2
+
+flagEC=0
+
+if [ "$i1" == "NaN" ] && [ "$i2" != "NaN" ]; then 
+EC=$i2
+flagEC=1
+fi
+
+if [ "$i2" == "NaN" ] && [ "$i1" != "NaN" ]; then
+EC=$i1
+flagEC=1
+fi
+
+if [ "$i2" == "NaN" ] && [ "$i1" == "NaN" ]; then
+EC=-1.00
+flagEC=1
+fi
+
+echo "flagEC="$flagEC
+
+if [ "$flagEC" == "1" ]; then
+echo "EC=" $EC
+elif [ "$flagEC" == "0" ]; then 
+EC=`$path/EXEC/mean.pl $i1 $i2`
+echo "EC=" $EC
+fi
+
+echo $EC > $outEC
+cat $outEC
+# CLEAN
+
+echo "ls -lart $cpath/*.cube" | bash
+
+mv $tag.pdb $outdir/
+mv $tag'_'$chain2.pdb $outdir/
+mv $tag'_'$chain1.pdb $outdir/
+mv $tag'_'$chain1$chain2.pdb $outdir/
+mv $tag'_'$chain1.rsa $outdir/
+mv $tag'_'$chain1.asalog $outdir/
+mv $tag'_'$chain1.asa $outdir/
+mv $tag'_'$chain2.rsa $outdir/
+mv $tag'_'$chain2.asalog $outdir/
+mv $tag'_'$chain2.asa $outdir/
+mv $tag'_'$chain1$chain2.asa $outdir/
+mv $tag'_'$chain1$chain2.rsa $outdir/
+mv $tag'_'$chain1$chain2.asalog $outdir/
+mv $tag'_'$chain2.iatom $outdir/
+mv $tag'_'$chain1.iatom $outdir/
+mv $tag'_'$chain1.dsurf $outdir/
+mv $tag'_'$chain2.dsurf $outdir/
+mv $tag'_'$chain1.res $outdir/
+mv $tag'_'$chain2.res $outdir/
+mv $code.asaAngsq $outdir/
+mv $metcores $outdir/
+mv $metrasview $outdir/
+echo "mv $cpath/*.cube $outdir/" | bash
+
+rm -f $cpath/orig.pdb
+rm -f $cpath/orig.res
+rm -f $cpath/res1.out
+rm -f $cpath/temp2
+rm -f $cpath/temp1
+rm -f $cpath/inp1.pdb
+rm -f $cpath/inp2.pdb
+rm -f $cpath/inp1map.pdb
+rm -f $cpath/inp1map.res
+rm -f $cpath/inp2map.pdb
+rm -f $cpath/inp2map.res
+rm -f $cpath/inp12map.pdb
+rm -f $cpath/inp12map.res
+rm -f $cpath/met.cores
+rm -f $cpath/met.rasview
+rm -f $cpath/fort.14
+rm -f $cpath/fort.15
+rm -f $cpath/fort.16
+rm -f $cpath/reso2n.map
+rm -f $cpath/ras1.select
+rm -f $cpath/ras2.select
+rm -f $cpath/pdbwH.pdb
+rm -f $cpath/out-cav.pdb
+rm -f $cpath/out.ply
+rm -f $cpath/out.ply.pdb
+rm -f $cpath/outms1-surf.pdb
+rm -f $cpath/intsurf1.pdb
+rm -f $cpath/outms2-surf.pdb
+rm -f $cpath/intsurf2.pdb
+rm -f $cpath/intsurf12.pdb
+rm -f $cpath/outms12-surf.pdb
+rm -f $cpath/redun.out
+rm -f $cpath/rdn.log
+rm -f $cpath/inp1m.pdb
+rm -f $cpath/inp.dsl
+rm -f $cpath/outhisO.pdb
+rm -f $cpath/outhiscysO.pdb
+rm -f $cpath/inp2m.pdb
+rm -f $cpath/real1dum2.pdb
+rm -f $cpath/real2dum1.pdb
+rm -f $cpath/ARCDAT
+rm -f $cpath/outsurf11.pdb
+rm -f $cpath/log11
+rm -f $cpath/outsurf21.pdb
+rm -f $cpath/log21
+rm -f $cpath/temp11.pot
+rm -f $cpath/temp21.pot
+rm -f $cpath/script1.prm
+rm -f $cpath/script2.prm
+rm -f $cpath/outmod1.pdb
+rm -f $cpath/outsurf12.pdb
+rm -f $cpath/log12
+rm -f $cpath/outmod2.pdb
+rm -f $cpath/outsurf22.pdb
+rm -f $cpath/log22
+rm -f $cpath/temp12.pot
+rm -f $cpath/temp22.pot
+rm -f $cpath/fort.777
+rm -f $cpath/fort.888
+rm -f $cpath/fort.999
+
+

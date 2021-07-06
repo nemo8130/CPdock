@@ -1,0 +1,124 @@
+#!/bin/bash
+# $path : <executable_path>
+# $cpath : current (working) path
+
+#================================================
+# Set paths as appropriate to your system
+#================================================
+
+sc_path=/home/sankar/Desktop/Installers/CCP4/destination/ccp4-7.0/bin
+delphi_path=/home/sankar/bin
+ESpath=/home/sankar/bin
+reduce3path=/home/sankar/bin
+reducelib=/home/sankar/lib
+
+upath=`realpath $0`
+path=`echo ${upath:0:-7}`		# length(/CPdock)=7
+
+echo "upath=" $upath
+echo "path=" $path
+cpath=`pwd`
+echo "cpath=" $cpath
+
+pdb=$1
+
+if [ "$#" -lt "1" ]; then
+        echo	
+	echo "=============================================="
+	echo "Enter PDB-file as arg-1" 
+	echo "Usage: \$exec/CPdock_web <\$path/\$PDB-file>"
+	echo "=============================================="
+	echo
+	exit
+fi
+
+echo $pdb
+cp $pdb $cpath/storepdb
+
+basename=`echo ${pdb/\.pdb/}`
+basename=`echo ${basename/${path}/}`
+basename=`echo ${basename/\//}`
+echo $basename
+pdbfile=${basename}.pdb
+echo $pdbfile
+outdir=OUT$basename
+mkdir -p $cpath/$outdir/
+echo $cpath/$outdir
+
+$path/EXEC/trimH.pl $pdb > $cpath/temp0
+$reduce3path/reduce -build $cpath/temp0 -DB $reducelib/reduce_het_dict.txt | grep '^ATOM\|^HETATM' > $cpath/temp1
+$path/EXEC/hetmetOnly.pl $cpath/temp1 > $cpath/temp1n
+$path/EXEC/convH_reduce3.pl $cpath/temp1n > $cpath/temp2
+$path/EXEC/delcol13.pl $cpath/temp2 > $pdb
+cp $pdb reducedpdb
+tail reducedpdb
+
+$path/EXEC/renumbPDB2chains.bash $path $pdb
+
+Scfile=`echo ${pdb/\.pdb/\.Sc}`
+ECfile=`echo ${pdb/\.pdb/\.EC}`
+ScEC=`echo ${pdb/\.pdb/\.ScEC}`
+ps=`echo ${pdb/\.pdb/\.ps}`
+
+echo "$path/runSc $pdb $sc_path"
+$path/runSc $pdb $sc_path
+
+if [ -e "$cpath/Scout.prompt" ]; then
+	echo "$cpath/Scout.prompt created!!"
+	Sc_size=`cat $cpath/Scout.prompt`
+	if [ "$Sc_size" == "Too_many_atoms" ]; then
+		cat $cpath/Scout.prompt
+		exit
+	fi
+fi
+
+#diff $pdb TESTPDBS/$pdb | wc
+
+echo "$path/runEC $pdb $delphi_path $ESpath 1"
+$path/runEC $pdb $delphi_path $ESpath 1 
+ls -lart $Scfile
+ls -lart $ECfile
+
+echo $ScEC 
+echo $ps
+
+paste $Scfile $ECfile 
+paste $Scfile $ECfile  > $cpath/temp.32
+awk '{printf "%8.3f %8.3f\n",$1,$2}' $cpath/temp.32 > $ScEC
+ls -lart $ScEC
+
+SEstr=`cat $ScEC`
+echo $pdb $SEstr >> store.check
+
+echo "$path/CPdock_plot $path $basename.ScEC"
+$path/CPdock_plot $path $basename.ScEC
+
+mv $cpath/storepdb $pdb
+mv $cpath/reducedpdb $pdb.reduce
+
+echo "======================================="
+echo "OUTPUT:"
+echo "======================================="
+
+ls -lart $ScEC
+ls -lart $ps
+
+mv $ScEC $cpath/$outdir/
+mv $ps $cpath/$outdir/
+mv $pdb $cpath/$outdir/
+mv $pdb.reduce $cpath/$outdir/
+mv Sc.log $cpath/$outdir/
+
+rm $cpath/${basename}*
+rm $cpath/fort.444  
+rm $cpath/junk.temp  
+rm $cpath/temp0
+rm $cpath/temp1n
+rm $cpath/temp.999
+rm $cpath/temp.32
+rm $cpath/fix
+ls -lart $cpath/$outdir/
+
+
+
+

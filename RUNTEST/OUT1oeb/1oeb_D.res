@@ -1,0 +1,12 @@
+   1-ALA-D
+   2-PRO-D
+   3-SER-D
+   4-ILE-D
+   5-ASP-D
+   6-ARG-D
+   7-SER-D
+   8-THR-D
+   9-LYS-D
+  10-PRO-D
+  11-PRO-D
+  12-LEU-D

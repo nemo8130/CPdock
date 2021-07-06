@@ -1,0 +1,32 @@
+#!/bin/bash
+# $path : <executable_path>
+# $cpath : current (working) path
+
+path=$1
+ScEC=$2
+
+if [ "$#" -eq "0" ]; then 
+echo "Enter <path> and <ScEC> as arg-1 and arg-2"
+exit
+fi
+
+cpath=`pwd`
+
+ln -s $path/LIBR/color.map $cpath/color.map
+ln -s $path/LIBR/DB3-SE.trsq $cpath/DB3-SE.trsq
+
+trScEC=`echo ${ScEC/\.ScEC/-tr.ScEC}`
+targ=`echo ${ScEC/\.ScEC/}`
+
+echo "$path/EXEC/trdn.exe $cpath/$ScEC $cpath"
+$path/EXEC/trdn.exe $cpath/$ScEC $cpath
+mv $cpath/fort.9 $cpath/$trScEC
+echo $trScEC
+
+echo "$path/EXEC/makeps.pl $cpath/DB3-SE.trsq $cpath/$trScEC $targ $cpath/$ScEC $cpath > $cpath/$targ.ps"
+$path/EXEC/makeps.pl $cpath/DB3-SE.trsq $cpath/$trScEC $targ $cpath/$ScEC $cpath > $cpath/$targ.ps
+
+#rm -f $trScEC
+
+#gv $targ.ps &
+

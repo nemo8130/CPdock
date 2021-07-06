@@ -1,0 +1,20 @@
+REM  Relative accessibilites read from external file "/home/sankar/Desktop/my_softwares/CPdock_web_latest/LIBR/standard.data"
+REM  File of summed (Sum) and % (per.) accessibilities for 
+REM RES _ NUM      All-atoms   Total-Side   Main-Chain    Non-polar    All polar
+REM                ABS   REL    ABS   REL    ABS   REL    ABS   REL    ABS   REL
+RES ALA D   1   146.74 135.9  70.35 101.4  76.38 198.2  73.84 103.5  72.89 199.3
+RES PRO D   2   123.11  90.4 114.82  95.8   8.30  51.1 114.87  95.0   8.24  54.3
+RES SER D   3   115.71  99.3  90.05 115.3  25.66  66.8  50.53 104.1  65.17  95.9
+RES ILE D   4   132.23  75.5  99.86  72.4  32.38  87.1 100.27  72.1  31.96  88.8
+RES ASP D   5    86.18  61.4  72.37  70.5  13.80  36.6  38.10  77.4  48.08  52.7
+RES ARG D   6   163.61  68.5 148.47  73.8  15.14  40.4  58.15  74.7 105.46  65.5
+RES SER D   7   102.31  87.8  69.22  88.6  33.10  86.2  57.02 117.4  45.30  66.7
+RES THR D   8    98.32  70.6  80.01  78.7  18.31  48.7  67.09  88.6  31.23  49.1
+RES LYS D   9   140.06  69.7 118.17  72.4  21.88  58.3  79.41  68.1  60.65  72.0
+RES PRO D  10   108.15  79.4  97.39  81.2  10.76  66.3  98.53  81.5   9.62  63.3
+RES PRO D  11   133.89  98.4 118.45  98.8  15.43  95.1 118.49  98.0  15.40 101.4
+RES LEU D  12   231.42 129.6 161.80 114.7  69.62 185.6 188.95 132.8  42.48 116.9
+END  Absolute sums over single chains surface 
+CHAIN  1 D     1581.7       1241.0        340.8       1045.2        536.5
+END  Absolute sums over all chains 
+TOTAL          1581.7       1241.0        340.8       1045.2        536.5

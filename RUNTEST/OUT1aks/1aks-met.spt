@@ -1,0 +1,10 @@
+load     1aks_AB.pdb
+wireframe off
+ribbon
+color chain
+select hetero
+spacefill
+select :B &&  52, :B &&  54, :B &&  57, :B &&  59, :B &&  62                                        
+wireframe 100
+color cpk
+ 
