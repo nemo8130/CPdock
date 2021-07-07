@@ -138,18 +138,18 @@
       sumbsa2 = sumbsa2 + dls2(i)
       enddo
 
-      bsamean = (sumbsa1 + sumbsa2)/2.0
-      nBSA=bsamean/sumasa12
+      bsa12=(sumbsa1+sumbsa2)
+      nBSA=bsa12/sumasa12
 
-      write(*,192)bsamean,sumasa12,nBSA
-192   format(3(f12.5,5x))      
+      write(*,192)bsa12,sumasa12,nBSA
+192   format(1x,f12.3,5x,f12.3,5x,f12.5,5x,f12.5)      
 
-      write(16,134) '|BSAmean---|','|ASA12-----|','|nBSA------|'
-      write(16,192)bsamean,sumasa12,nBSA
+      write(16,134) '|sum(∆ASA)~|','|ASAcomplex|','|nBSA------|'
+      write(16,192)bsa12,sumasa12,nBSA
 
-134   format(3(a12,5x))
+134   format(3(a15,2x))
 
-      write(*,812)int_tot,sumbsa1,sumbsa2,bsamean
+      write(*,812)int_tot,sumbsa1,sumbsa2,bsa12
 812   format(i6,2x,f10.3,2x,f10.3,2x,f10.3)
 
 56    format(a3,2x,a3,2x,i3,2x,a1,2x,f9.4)
