@@ -302,6 +302,7 @@ echo "==============================================================="
 echo "iatom2="$iatom1
 echo "iatom1="$iatom2
 
+#path corrected 
 rm $cpath/met.cores >& /dev/null 
 rm $cpath/met.rasview >& /dev/null 
 
