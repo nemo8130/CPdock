@@ -302,8 +302,9 @@ echo "==============================================================="
 echo "iatom2="$iatom1
 echo "iatom1="$iatom2
 
-rm $path/met.cores >& /dev/null 
-rm $path/met.rasview >& /dev/null 
+rm $cpath/met.cores >& /dev/null 
+rm $cpath/met.rasview >& /dev/null 
+
 $path/EXEC/mcoord.exe $pdb12 $cpath/met.cores $cpath/met.rasview
 Nmet=`wc -l $cpath/met.cores | cut -f1 -d' '`
 	if [ "$Nmet" == "0" ]; then
