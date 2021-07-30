@@ -81,7 +81,7 @@
 
        do j = 1,ic2             ! On Metal ions
 !       write(873,819)matom(j),mres(j),imres(j),mchain(j),
-     &xm(j),ym(j),zm(j)
+!     &xm(j),ym(j),zm(j)
           do k = ir1,irl        ! On residues
           ik = 0
              do i = 1,ic1       ! On protein atoms
