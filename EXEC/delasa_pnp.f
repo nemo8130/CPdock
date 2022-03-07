@@ -168,21 +168,21 @@
       sumbsa2np = sumbsa2np + dls2np(i)
       enddo
 
-      print*,"SUM(BSA)(M1)=",sumbsa1,sumbsa1p,sumbsa1np
-      print*,"SUM(BSA)(M2)=",sumbsa2,sumbsa2p,sumbsa2np
+!      print*,"SUM(BSA)(M1)=",sumbsa1,sumbsa1p,sumbsa1np
+!      print*,"SUM(BSA)(M2)=",sumbsa2,sumbsa2p,sumbsa2np
 
       bsa12=(sumbsa1+sumbsa2)
       bsa12p=(sumbsa1p+sumbsa2p)
       bsa12np=(sumbsa1np+sumbsa2np)
 
-      print*,"BSA=",bsa12,bsa12p,bsa12np
-      print*,"sum(ASA12)=",sumasa12,sumasa12p,sumasa12np
+!      print*,"BSA=",bsa12,bsa12p,bsa12np
+!      print*,"sum(ASA12)=",sumasa12,sumasa12p,sumasa12np
 
       nBSA=bsa12/sumasa12
       nBSAp=bsa12p/sumasa12p
       nBSAnp=bsa12np/sumasa12np
 
-      write(*,281)"nBSA=",nBSA,nBSAp,nBSAnp
+!      write(*,281)"nBSA=",nBSA,nBSAp,nBSAnp
 281   format(a10,3(2x,f10.3))      
 
       write(*,192)bsa12,sumasa12,nBSA,nBSAnp,nBSAp
@@ -192,13 +192,13 @@
      &'|nBSAp-----|','|nBSAnp----|'
       write(16,192)bsa12,sumasa12,nBSA,nBSAp,nBSAnp
 
-      write(*,*)'------------------------------------------------------'
-      write(*,*)'------------------------------------------------------'
-      write(*,134)'|sum(∆ASA)~|','|ASAcomplex|','|nBSA------|',
-     &'|nBSAp-----|','|nBSAnp----|'
-      write(*,192)bsa12,sumasa12,nBSA,nBSAp,nBSAnp
-      write(*,*)'------------------------------------------------------'
-      write(*,*)'------------------------------------------------------'
+!      write(*,*)'------------------------------------------------------'
+!      write(*,*)'------------------------------------------------------'
+!      write(*,134)'|sum(∆ASA)~|','|ASAcomplex|','|nBSA------|',
+!     &'|nBSAp-----|','|nBSAnp----|'
+!      write(*,192)bsa12,sumasa12,nBSA,nBSAp,nBSAnp
+!      write(*,*)'------------------------------------------------------'
+!      write(*,*)'------------------------------------------------------'
 
 134   format(5(a15,2x))
 
