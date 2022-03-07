@@ -26,7 +26,7 @@ rm -f $path/EXEC/*.exe
 $fortcomp $path/EXEC/globuleN.f -o $path/EXEC/glbN.exe
 $fortcomp $path/EXEC/metsph.f -o $path/EXEC/msph.exe
 $fortcomp $path/EXEC/accall.f -o $path/EXEC/accall.exe
-$fortcomp $path/EXEC/delasa.f -o $path/EXEC/delasa.exe
+$fortcomp $path/EXEC/delasa_pnp.f -o $path/EXEC/delasa.exe
 $fortcomp $path/EXEC/hdist.f -o $path/EXEC/hdist.exe
 $fortcomp $path/EXEC/buryasa.f -o $path/EXEC/buryasa.exe
 $fortcomp $path/EXEC/fetchintsurf.f -o $path/EXEC/fetchds.exe
