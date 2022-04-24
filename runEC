@@ -104,7 +104,7 @@ $path/EXEC/reducemap.pl $pdbinp > $cpath/temp.pdb
 mv $cpath/temp.pdb $pdbinp
 #awk '$1=="ATOM" || $1=="HETATM"' formp.pdb > temp.pdb
 cp $pdbinp $cpath/temp.pdb
-$path/EXEC/metRrename.csh $cpath/temp.pdb
+$path/EXEC/metRrename.bash $cpath/temp.pdb
 mv $cpath/temp.pdb $pdbinp
 echo $pdbinp
 
