@@ -481,11 +481,11 @@ fi
 
 echo "GRID SIZE FOR DELPHI: " $gsz
 
-$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf1.pdb outmod1.pdb outsurf11.pdb $gsz $gauss
-echo "$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf1.pdb outmod1.pdb outsurf11.pdb $gsz $gauss"
+$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf1.pdb outmod1.pdb outsurf11.pot $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf1.pdb outmod1.pdb outsurf11.pot $gsz $gauss"
 mv $cpath/script.prm $cpath/script1.prm 
-$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf1.pdb outmod2.pdb outsurf21.pdb $gsz $gauss
-echo "$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf1.pdb outmod2.pdb outsurf21.pdb $gsz $gauss"
+$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf1.pdb outmod2.pdb outsurf21.pot $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf1.pdb outmod2.pdb outsurf21.pot $gsz $gauss"
 mv $cpath/script.prm $cpath/script2.prm 
 
 echo "delphi is running now from $delphi_path"
@@ -506,14 +506,14 @@ elif [ "$gauss" == "1" ]; then
 fi
 
 
-$path/EXEC/extpot.pl $cpath/outsurf11.pdb > $cpath/temp11.pot
-$path/EXEC/extpot.pl $cpath/outsurf21.pdb > $cpath/temp21.pot
+$path/EXEC/extpot.pl $cpath/outsurf11.pot > $cpath/temp11.pot
+$path/EXEC/extpot.pl $cpath/outsurf21.pot > $cpath/temp21.pot
 
-$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf2.pdb outmod1.pdb outsurf12.pdb $gsz $gauss
-echo "$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf2.pdb outmod1.pdb outsurf12.pdb $gsz $gauss"
+$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf2.pdb outmod1.pdb outsurf12.pot $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real1dum2.pdb intsurf2.pdb outmod1.pdb outsurf12.pot $gsz $gauss"
 mv $cpath/script.prm $cpath/script1.prm 
-$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf2.pdb outmod2.pdb outsurf22.pdb $gsz $gauss
-echo "$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf2.pdb outmod2.pdb outsurf22.pdb $gsz $gauss"
+$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf2.pdb outmod2.pdb outsurf22.pot $gsz $gauss
+echo "$path/EXEC/generateprm26.pl $cpath real2dum1.pdb intsurf2.pdb outmod2.pdb outsurf22.pot $gsz $gauss"
 mv $cpath/script.prm $cpath/script2.prm 
 
 if [ "$gauss" == "0" ]; then
@@ -532,8 +532,8 @@ fi
 
 echo "ls -lart $cpath/*.cube" | bash
 
-$path/EXEC/extpot.pl $cpath/outsurf12.pdb > $cpath/temp12.pot
-$path/EXEC/extpot.pl $cpath/outsurf22.pdb > $cpath/temp22.pot
+$path/EXEC/extpot.pl $cpath/outsurf12.pot > $cpath/temp12.pot
+$path/EXEC/extpot.pl $cpath/outsurf22.pot > $cpath/temp22.pot
 
 i1=`$path/EXEC/ccpsw.exe $cpath/temp11.pot $cpath/temp21.pot $cpath`
 echo "$path/EXEC/ccpsw.exe $cpath/temp11.pot $cpath/temp21.pot $cpath"
