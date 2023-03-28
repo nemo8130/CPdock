@@ -474,10 +474,10 @@ echo "DELPHI INPUTS CREATED WITH DUMMY ATOMS"
 gsz=`$path/EXEC/hdist.exe $pdbinp $cpath`
 echo "$path/EXEC/hdist.exe $pdbinp $cpath"
 
-if [ "$lench" -gt "1000" ]; then 
-echo "length exceeds 1000 : " $lench
-gsz=281
-fi
+#if [ "$lench" -gt "1000" ]; then 
+#echo "length exceeds 1000 : " $lench
+#gsz=281
+#fi
 
 echo "GRID SIZE FOR DELPHI: " $gsz
 
