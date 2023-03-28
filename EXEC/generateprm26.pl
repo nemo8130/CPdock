@@ -24,7 +24,10 @@ chomp $gsz;
 $gauss = $ARGV[6];
 chomp $gauss;
 
-$gsz = int($gsz);	# FOR DELPHI v.6
+$gsz = int($gsz);       # FOR DELPHI v.6
+if($gsz % 2 == 0){
+        $gsz +=1;
+}
 
 open (OUT,">$path/script.prm");
 
